@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssetPulse - Gestão Inteligente de Ativos & Investimentos</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Estilos Personalizados da SPA -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Notificações Toast Flutuantes -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Navegação Superior -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-chart-pie"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>Asset<span>Pulse</span></h1>
+                    <p class="tagline">Gestão Inteligente de Ativos</p>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <div class="api-status-badge" id="api-status" title="Status da conexão com o Backend Flask">
+                    <span class="status-indicator-dot"></span>
+                    <span id="api-status-text">Verificando API...</span>
+                </div>
+                <button class="btn btn-secondary" id="btn-open-transacao-modal">
+                    <i class="fa-solid fa-plus-minus"></i> Nova Transação
+                </button>
+                <button class="btn btn-primary" id="btn-open-ativo-modal">
+                    <i class="fa-solid fa-plus"></i> Novo Ativo
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="main-container">
+        <!-- Seção 1: Indicadores e Métricas Rápidas (KPIs) -->
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Patrimônio Investido</span>
+                    <div class="kpi-icon icon-blue">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpi-patrimonio">R$ 0,00</div>
+                <div class="kpi-footer">
+                    <span class="badge badge-success"><i class="fa-solid fa-arrow-trend-up"></i> Total em Custódia</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Proventos Recebidos</span>
+                    <div class="kpi-icon icon-emerald">
+                        <i class="fa-solid fa-sack-dollar"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-emerald" id="kpi-proventos">R$ 0,00</div>
+                <div class="kpi-footer">
+                    <span class="text-muted">Dividendos & JCP acumulados</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Total de Ativos</span>
+                    <div class="kpi-icon icon-purple">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpi-ativos">0</div>
+                <div class="kpi-footer">
+                    <span class="text-muted" id="kpi-transacoes-count">0 movimentações registradas</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Diversificação</span>
+                    <div class="kpi-icon icon-amber">
+                        <i class="fa-solid fa-diagram-project"></i>
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpi-classes">0 Classes</div>
+                <div class="kpi-footer">
+                    <span class="text-muted" id="kpi-maior-alocacao">Alocação equilibrada</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 2: Distribuição por Categoria de Investimentos -->
+        <section class="card allocation-section" id="section-allocation">
+            <div class="card-header">
+                <div>
+                    <h2><i class="fa-solid fa-chart-column"></i> Alocação Patrimonial por Classe</h2>
+                    <p class="subtitle">Distribuição do capital alocado entre as categorias de investimento</p>
+                </div>
+                <button class="btn btn-sm btn-outline" id="btn-refresh-all" title="Atualizar dados da carteira">
+                    <i class="fa-solid fa-rotate"></i> Atualizar
+                </button>
+            </div>
+            <div class="allocation-bars" id="allocation-bars-container">
+                <div class="loading-state">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Carregando distribuição da carteira...
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 3: Barra de Ferramentas e Filtros da Carteira -->
+        <section class="toolbar-section">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="search-input" placeholder="Buscar por código (ex: PETR4) ou nome...">
+            </div>
+
+            <div class="filters-group">
+                <select id="filter-category" class="select-control">
+                    <option value="">Todas as Classes</option>
+                    <option value="Ações">Ações</option>
+                    <option value="FIIs">Fundos Imobiliários (FIIs)</option>
+                    <option value="Criptomoedas">Criptomoedas</option>
+                    <option value="Renda Fixa">Renda Fixa</option>
+                    <option value="ETFs">ETFs</option>
+                </select>
+
+                <div class="view-toggle">
+                    <button class="toggle-btn active" id="btn-view-cards" title="Visualização em Cards">
+                        <i class="fa-solid fa-grip"></i>
+                    </button>
+                    <button class="toggle-btn" id="btn-view-table" title="Visualização em Tabela">
+                        <i class="fa-solid fa-table-list"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção 4: Lista e Cards de Ativos -->
+        <section class="assets-section">
+            <!-- Visualização em Cards -->
+            <div class="assets-cards-grid" id="assets-cards-container">
+                <div class="loading-state">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Conectando à API e carregando ativos...
+                </div>
+            </div>
+
+            <!-- Visualização em Tabela (Oculta por padrão) -->
+            <div class="table-container" id="assets-table-container" style="display: none;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nome do Ativo</th>
+                            <th>Classe</th>
+                            <th>Qtd. Custódia</th>
+                            <th>Preço Médio</th>
+                            <th>Total Investido</th>
+                            <th>Proventos</th>
+                            <th>Meta (%)</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assets-table-body">
+                        <!-- Preenchido dinamicamente pelo JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Seção 5: Histórico Geral de Transações Recentes -->
+        <section class="card history-section">
+            <div class="card-header">
+                <div>
+                    <h2><i class="fa-solid fa-clock-rotate-left"></i> Histórico de Movimentações</h2>
+                    <p class="subtitle">Registro cronológico de compras, vendas e proventos na carteira</p>
+                </div>
+                <div class="history-filters">
+                    <select id="filter-transacao-tipo" class="select-control select-sm">
+                        <option value="">Todos os Tipos</option>
+                        <option value="COMPRA">Compras</option>
+                        <option value="VENDA">Vendas</option>
+                        <option value="DIVIDENDO">Dividendos</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Ativo</th>
+                            <th>Tipo</th>
+                            <th>Quantidade</th>
+                            <th>Preço Unitário</th>
+                            <th>Valor Total</th>
+                            <th>Observações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-table-body">
+                        <!-- Preenchido via API -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- ======================================================= -->
+    <!-- MODAIS INTERATIVOS                                      -->
+    <!-- ======================================================= -->
+
+    <!-- Modal 1: Cadastro de Novo Ativo (POST /api/ativo) -->
+    <div class="modal-overlay" id="modal-ativo">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-plus-circle text-primary"></i> Cadastrar Novo Ativo</h3>
+                <button class="modal-close" data-close="modal-ativo">&times;</button>
+            </div>
+            <form id="form-cadastrar-ativo">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="ativo-codigo">Código / Ticker <span class="required">*</span></label>
+                        <input type="text" id="ativo-codigo" placeholder="Ex: VALE3, MXRF11, ETH" required maxlength="15" autocomplete="off">
+                        <small class="form-hint">Letras maiúsculas ou números.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="ativo-categoria">Classe de Ativo <span class="required">*</span></label>
+                        <select id="ativo-categoria" required>
+                            <option value="">Selecione uma classe</option>
+                            <option value="Ações">Ações</option>
+                            <option value="FIIs">Fundos Imobiliários (FIIs)</option>
+                            <option value="Criptomoedas">Criptomoedas</option>
+                            <option value="Renda Fixa">Renda Fixa</option>
+                            <option value="ETFs">ETFs</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="ativo-nome">Nome / Razão Social <span class="required">*</span></label>
+                    <input type="text" id="ativo-nome" placeholder="Ex: Vale S.A." required maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="ativo-meta">Meta de Alocação na Carteira (%)</label>
+                    <div class="input-with-suffix">
+                        <input type="number" id="ativo-meta" placeholder="0.0" min="0" max="100" step="0.5" value="10.0">
+                        <span class="suffix">%</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="ativo-obs">Tese de Investimento / Observações</label>
+                    <textarea id="ativo-obs" rows="2" placeholder="Ex: Posição estratégica para geração de dividendos recorrentes."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-close="modal-ativo">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-ativo">
+                        <i class="fa-solid fa-check"></i> Salvar Ativo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Registro de Transação (POST /api/transacao) -->
+    <div class="modal-overlay" id="modal-transacao">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-money-bill-transfer text-success"></i> Nova Movimentação</h3>
+                <button class="modal-close" data-close="modal-transacao">&times;</button>
+            </div>
+            <form id="form-cadastrar-transacao">
+                <div class="form-group">
+                    <label for="trans-ativo-id">Ativo Selecionado <span class="required">*</span></label>
+                    <select id="trans-ativo-id" required>
+                        <option value="">Carregando ativos...</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="trans-tipo">Tipo de Operação <span class="required">*</span></label>
+                        <select id="trans-tipo" required>
+                            <option value="COMPRA">Compra</option>
+                            <option value="VENDA">Venda</option>
+                            <option value="DIVIDENDO">Provento / Dividendo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="trans-data">Data da Operação <span class="required">*</span></label>
+                        <input type="date" id="trans-data" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="trans-quantidade">Quantidade <span class="required">*</span></label>
+                        <input type="number" id="trans-quantidade" placeholder="Ex: 100" min="0.00000001" step="any" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="trans-preco">Preço Unitário (R$) <span class="required">*</span></label>
+                        <input type="number" id="trans-preco" placeholder="Ex: 34.50" min="0.00000001" step="any" required>
+                    </div>
+                </div>
+
+                <div class="total-preview-box">
+                    <span>Total Estimado da Operação:</span>
+                    <strong id="trans-total-preview">R$ 0,00</strong>
+                </div>
+
+                <div class="form-group">
+                    <label for="trans-descricao">Observações / Nota de Corretagem</label>
+                    <input type="text" id="trans-descricao" placeholder="Ex: Ordem executada via Home Broker">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-close="modal-transacao">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-transacao">
+                        <i class="fa-solid fa-check"></i> Registrar Movimentação
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 3: Edição de Ativo (PUT /api/ativo) -->
+    <div class="modal-overlay" id="modal-editar-ativo">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pen-to-square text-amber"></i> Editar Informações do Ativo</h3>
+                <button class="modal-close" data-close="modal-editar-ativo">&times;</button>
+            </div>
+            <form id="form-editar-ativo">
+                <input type="hidden" id="edit-ativo-id">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Código / Ticker</label>
+                        <input type="text" id="edit-ativo-codigo" disabled class="input-disabled">
+                        <small class="form-hint">O código do ativo não pode ser alterado.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-ativo-categoria">Classe de Ativo <span class="required">*</span></label>
+                        <select id="edit-ativo-categoria" required>
+                            <option value="Ações">Ações</option>
+                            <option value="FIIs">Fundos Imobiliários (FIIs)</option>
+                            <option value="Criptomoedas">Criptomoedas</option>
+                            <option value="Renda Fixa">Renda Fixa</option>
+                            <option value="ETFs">ETFs</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-ativo-nome">Nome / Razão Social <span class="required">*</span></label>
+                    <input type="text" id="edit-ativo-nome" required maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-ativo-meta">Meta de Alocação na Carteira (%)</label>
+                    <div class="input-with-suffix">
+                        <input type="number" id="edit-ativo-meta" min="0" max="100" step="0.5" required>
+                        <span class="suffix">%</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-ativo-obs">Tese de Investimento / Observações</label>
+                    <textarea id="edit-ativo-obs" rows="2"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-close="modal-editar-ativo">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-save"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 4: Detalhes do Ativo e Extrato Completo (GET /api/ativo?id=...) -->
+    <div class="modal-overlay" id="modal-detalhes-ativo">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div>
+                    <h3 id="detalhe-titulo"><i class="fa-solid fa-chart-line text-primary"></i> Detalhes do Ativo</h3>
+                    <p class="subtitle" id="detalhe-subtitulo">Código e razão social</p>
+                </div>
+                <button class="modal-close" data-close="modal-detalhes-ativo">&times;</button>
+            </div>
+
+            <div class="detalhe-body">
+                <div class="kpi-grid kpi-grid-mini" id="detalhe-kpis">
+                    <div class="mini-kpi">
+                        <span class="label">Custódia Atual</span>
+                        <strong class="value" id="detalhe-custodia">0</strong>
+                    </div>
+                    <div class="mini-kpi">
+                        <span class="label">Preço Médio</span>
+                        <strong class="value" id="detalhe-preco-medio">R$ 0,00</strong>
+                    </div>
+                    <div class="mini-kpi">
+                        <span class="label">Total Aportado</span>
+                        <strong class="value" id="detalhe-total-investido">R$ 0,00</strong>
+                    </div>
+                    <div class="mini-kpi">
+                        <span class="label">Proventos Acumulados</span>
+                        <strong class="value text-emerald" id="detalhe-total-proventos">R$ 0,00</strong>
+                    </div>
+                </div>
+
+                <div class="detalhe-obs-box" id="detalhe-obs-box">
+                    <i class="fa-regular fa-lightbulb"></i>
+                    <span id="detalhe-observacoes">Sem observações cadastradas.</span>
+                </div>
+
+                <div class="detalhe-transactions-title">
+                    <h4><i class="fa-solid fa-list-check"></i> Histórico de Transações do Ativo</h4>
+                    <button class="btn btn-sm btn-outline" id="btn-add-transacao-direta">
+                        <i class="fa-solid fa-plus"></i> Adicionar Transação
+                    </button>
+                </div>
+
+                <div class="table-container modal-table-scroll">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Tipo</th>
+                                <th>Quantidade</th>
+                                <th>Preço Unit.</th>
+                                <th>Total</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detalhe-transacoes-tbody">
+                            <!-- Preenchido via API -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-close="modal-detalhes-ativo">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 5: Confirmação de Exclusão (DELETE /api/ativo?id=...) -->
+    <div class="modal-overlay" id="modal-confirm-delete">
+        <div class="modal-card modal-sm">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-triangle-exclamation text-danger"></i> Confirmar Exclusão</h3>
+                <button class="modal-close" data-close="modal-confirm-delete">&times;</button>
+            </div>
+            <div class="modal-body-p">
+                <p>Tem certeza que deseja excluir o ativo <strong id="delete-ativo-nome"></strong>?</p>
+                <p class="text-danger-sm"><i class="fa-solid fa-circle-exclamation"></i> Esta ação é irreversível e excluirá todas as transações associadas a ele.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-close="modal-confirm-delete">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btn-confirm-delete-action">
+                    <i class="fa-solid fa-trash-can"></i> Excluir Definitivamente
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="footer">
+        <p>AssetPulse &copy; 2025 • Projeto de MVP da Pós-Graduação em Desenvolvimento Full Stack Básico.</p>
+        <p class="footer-meta">Construído com Python, Flask, SQLite e JavaScript Vanilla.</p>
+    </footer>
+
+    <!-- Script da SPA (Sem módulos para execução direta via file://) -->
+    <script src="js/app.js"></script>
+</body>
+</html>
