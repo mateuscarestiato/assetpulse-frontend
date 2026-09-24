@@ -52,7 +52,7 @@ O **AssetPulse Web** é uma Single Page Application (SPA) autoral, elegante e re
 
 Para executar a interface do front-end, você precisará apenas de:
 - Um navegador web moderno instalado (Google Chrome, Microsoft Edge, Mozilla Firefox, Safari, etc.).
-- Ter a API do back-end (`mvp-invest-api`) em execução na porta `5000` (`http://127.0.0.1:5000`).
+- Ter a API do back-end (`assetpulse-backend`) em execução na porta `5000` (`http://127.0.0.1:5000`).
 
 ---
 
@@ -61,9 +61,14 @@ Para executar a interface do front-end, você precisará apenas de:
 A execução é extremamente simples e não requer nenhuma instalação de pacotes ou comandos de build:
 
 ### Método 1: Duplo Clique (Recomendado)
-1. Navegue até a pasta `mvp-invest-web` no Explorador de Arquivos do Windows ou no Finder do Mac.
-2. Dê um duplo clique sobre o arquivo **`index.html`**.
-3. O projeto será aberto instantaneamente no seu navegador padrão via protocolo `file://`.
+1. Clone ou acesse o repositório:
+```bash
+git clone https://github.com/mateuscarestiato/assetpulse-frontend.git
+cd assetpulse-frontend
+```
+2. Navegue até a pasta `assetpulse-frontend` no Explorador de Arquivos do Windows ou no Finder do Mac.
+3. Dê um duplo clique sobre o arquivo **`index.html`**.
+4. O projeto será aberto instantaneamente no seu navegador padrão via protocolo `file://`.
 
 ### Método 2: Via Linha de Comando
 No PowerShell ou terminal:
